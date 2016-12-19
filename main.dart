@@ -3,34 +3,28 @@ import 'dart:io';
 import 'package:markdown/markdown.dart';
 
 main(args) {
-    var dir = new Directory(args.first);
-    toHtml(dir);
+    toHtml(new Directory(args.first));
 }
 
 toHtml(dir) async {
-    Stream<FileSystemEntity> entities = dir.list(recursive: false, followLinks: false);
-    await for (FileSystemEntity entity in entities) {
-        var path = entity.path;
-        var type = await FileSystemEntity.type(entity.path);
-        switch (type) {
+    await for (FileSystemEntity entity in dir.list(recursive: false, followLinks: false)) {
+        final p = entity.path;
+        switch (await FileSystemEntity.type(p)) {
             case FileSystemEntityType.DIRECTORY:
-                toHtml(new Directory(entity.path));
+                toHtml(new Directory(p));
                 break;
             case FileSystemEntityType.FILE:
-                if (!path.endsWith('.md'))
+                if (!p.endsWith('.md'))
                     break;
-                var htmlFile = await new File('${path.substring(0, path.length-3)}.html').create();
-                var file = new File(entity.path);
-                var contents = await file.readAsString();
-                var html = markdownToHtml(contents);
-                await htmlFile.writeAsString(html);
-                file.delete();
+                final html = await new File('${p.substring(0, p.length-3)}.html').create();
+                await html.writeAsString(markdownToHtml(await entity.readAsString()));
+                entity.delete();
                 break;
             case FileSystemEntityType.LINK:
-                print('this is a symlink');
+                print('warning: symlinks are not supported (${p})');
                 break;
             default:
-                print("I don't know what this is");
+                print('warning: unrecognized file type (${p})');
         }
     }
 }
