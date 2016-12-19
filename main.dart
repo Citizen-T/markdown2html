@@ -25,9 +25,11 @@ toHtml(dir) async {
                     break;
                 print('is markdown: ${entity.path}');
                 var htmlFile = await new File('${path.substring(0, path.length-3)}.html').create();
-                var contents = await new File(entity.path).readAsString();
+                var file = new File(entity.path);
+                var contents = await file.readAsString();
                 var html = markdownToHtml(contents);
                 await htmlFile.writeAsString(html);
+                file.delete();
                 break;
             case FileSystemEntityType.LINK:
                 print('this is a symlink');
