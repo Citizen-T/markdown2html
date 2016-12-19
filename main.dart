@@ -10,16 +10,19 @@ main(args) {
 toHtml(dir) async {
     Stream<FileSystemEntity> entities = dir.list(recursive: false, followLinks: false);
     await for (FileSystemEntity entity in entities) {
-        FileSystemEntityType type = await FileSystemEntity.type(entity.path);
+        var path = entity.path;
+        var type = await FileSystemEntity.type(entity.path);
         switch (type) {
             case FileSystemEntityType.DIRECTORY:
                 toHtml(new Directory(entity.path));
                 break;
             case FileSystemEntityType.FILE:
-                if (!entity.path.endsWith('.md'))
+                if (!path.endsWith('.md'))
                     break;
-                var contents = await new File(entity.path).readAsString();       
-                print(markdownToHtml(contents));
+                var htmlFile = await new File('${path.substring(path.length-3)}.html').create();
+                var contents = await new File(entity.path).readAsString();
+                var html = markdownToHtml(contents);
+                await htmlFile.writeAsString(html);
                 break;
             case FileSystemEntityType.LINK:
                 print('this is a symlink');
